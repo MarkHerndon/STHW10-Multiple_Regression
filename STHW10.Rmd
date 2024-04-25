@@ -1,0 +1,254 @@
+---
+title: "STHW10"
+author: "Mark Herndon; RMH3867"
+output: html_document
+date: "2024-04-23"
+---
+
+github: 
+
+# Problem 1
+
+### Question:
+
+> For this first problem, the question we are trying to answer is whether racial redlining practices are evident within the private home insurance market across Chicago zip codes, or if other city-wide factors are greater contributors to the denial of insurance. To do this, we use data on the number of FAIR policies (federal policies issued to homeowners that cannot aquire private home insurance) that are issued per 100 homes within each zip code.
+
+
+
+### Approach:
+
+> To assess this question, we'll use linear regression models to estimate and compare the effects of various predictors on the number of FAIR policies issued per 100 homes in each ZIP code. In order to effectively interpret the data when analyzing, I first describe the overall relationship between the minority varible from our data to the number of policies issued using a scatter plot and fitting a regression model with 95% confidence intervals to it. The other predictor variables are then added to my initial regression model which adjusts for their potential confounding effects, and assesses their partial effects on the response variable. Constructing a regression table with 95% confidence intervals using the model, we can now see each predictor's estimated effect on the model's response through their coefficients and relative significance.
+
+
+
+### Results:
+
+
+```{r, message=FALSE, echo=FALSE}
+
+library(tidyverse)
+library(mosaic)
+library(moderndive)
+library(effectsize)
+library(ggplot2)
+
+
+redline <- read.csv("redlining.csv")
+
+
+
+# First we'll start with the overall relationship between # of fair policies and Prop of minorities per zip code
+
+
+ggplot(redline) + 
+  geom_point(aes(x=minority, y=policies))
+
+redlm0 = lm(policies ~ minority, data=redline)
+get_regression_table(redlm0, conf.level = 0.95, digits=2)
+
+
+# Though it is a weak increase, this model says there is an estimated 0.014 increase in fair policies for each  % increase in the proportion of minorities per zip code
+
+
+#ggplot(redline) + geom_point(aes(x=income, y=policies))
+             
+             
+#ggplot(redline) + geom_point(aes(x=age, y=policies))
+
+             
+#ggplot(redline) + geom_point(aes(x=fire, y=policies))
+
+
+# Now we'll add to our model all other variables which can be confounding
+# We can 
+
+
+redlm1 = lm(policies ~ minority + income + age + fire, data=redline)
+redlm1_regress_tbl <- get_regression_table(redlm1, conf.level = 0.95, digits=2)
+
+
+
+redlm1_regress_tbl
+
+
+
+```
+
+> Our results from the analysis show the partial relationships between each predictor to the response. For our variable of interest 'minority,' the effect was a 0.01 increse in number of policies for a 1% increase in minority demographic per Zip code with a 95% confidence interval of 0.00 to 0.01. Which gave it a P-value of 0.01.
+
+
+### Conclusion:
+
+> From our analysis, it is evident that there is racial redlining occuring within the private home insurance market. When assessing our model and the effect of the partial relationship between the minority predictor and the number of FAIR policies issued per 100 homes while adjuting for all other predictors. It was found that for a 1% increase in minority demographic per Zip code, there was a 0.01 increse in number of policies issued with a 95% confidence interval between 0.00 and 0.01. With a P-value of 0.01, this effect is statistically significant enough to suggest this relationship isn't due to random variance from our data. However it is fair to include in this conclusion that the magnitude of the effect minority demographic change has on the number of FAIR policies being issued is relatively small in itself and to other variables such as 'fire' (number of fires per 100 housing units) which has an effect that is more plausible under no partial relationship. Regardless, racial/ethnic redlining should still be considered in the context of this data.
+
+
+
+
+
+
+
+
+
+
+
+# Problem 2
+
+
+### Part A.)
+
+```{r, message = FALSE, echo = FALSE}
+
+
+
+grocery <- (read.csv("groceries.csv"))
+
+
+avg_prices <- grocery %>% group_by(Store) %>% 
+  
+  summarise(
+  avg_price = mean(Price)
+   )
+
+
+ggplot(data = avg_prices) + geom_col(aes(x= Store, y = avg_price)) + 
+  labs(title = "Average Price of products across stores", x= "Stores", y = "Avg Prices") + coord_flip()
+
+
+
+```
+
+*This bar plot displays the differences in average prices for products across Texas grocery stores*
+
+
+### Part B.)
+
+
+```{r, message = FALSE, echo = FALSE}
+
+
+stores_to_product <- grocery %>% group_by(Product) %>%
+  
+  summarise(
+    
+    num_store = n_distinct(Store)
+    
+  )
+
+
+ggplot(data = stores_to_product) + geom_col(aes(x= Product, y = num_store)) + 
+  labs(title = "Number of Stores that sell each product", x= "Product", y = "Number of Stores") + coord_flip()
+
+
+```
+
+*This bar plot displays the differences in the number of stores that sell the same product*
+
+
+### Part C.)
+
+
+
+```{r, message = FALSE, echo = FALSE}
+
+
+grocery$Type <- factor(grocery$Type)
+grocery$Type <- relevel(grocery$Type, ref = "Grocery")
+
+pplm <- lm(Price ~ Type + Product, data=grocery)
+get_regression_table(pplm, conf.level = 0.95, digits=2)
+
+
+
+
+```
+
+>Compared with ordinary grocery stores (like Albertsons, HEB, or Krogers), convenience stores charge somewhere between 0.41 and 0.92 cents more for the same product.”
+
+
+
+### Part D.)
+
+
+
+```{r, message = FALSE, echo = FALSE}
+
+
+
+pplm1 <- lm(Price ~ Store + Product, data=grocery)
+get_regression_table(pplm1, conf.level = 0.95, digits=2)
+
+
+# whole foods and wheatsville food- hihg
+
+# low- Walmart and kroger fresh
+
+```
+
+> The stores that generally charge the lowest prices for the same products are Walmart and Kroger Fresh Fare. Walmart's prices range from 53 cents to $1.45 less than the baseline store, while Kroger Fresh Fare's prices range from 44 cents to $1.36 less. On the other hand, the stores that charge the highest prices are Whole Foods and Wheatsville Food Co-Op. Whole Foods' prices range from 2 cents to 71 cents higher than the baseline, and Wheatsville Food Co-Op shows a varied pricing structure, with prices ranging from 6 cents lower to 64 cents higher than the baseline.
+
+
+
+
+### Part E.)
+
+
+> Using our regression model, the coefficients indicate that Central Market generally charges more than HEB for the same products. Specifically, the model estimates for HEB and Central Market are -0.65 and -0.57, respectively. These coefficients suggest that both stores charge less than our refrence store, but Central Market charges slightly more than HEB. This difference aligns with Central Market's branding as a higher-end store. The confidence intervals for HEB (-0.95 to -0.35) and Central Market (-0.92 to -0.23) are almost similar, which suggests that while there is a difference in pricing, it is not extremely large and that the pricing stategy for the same products is not radically different. When comparing these findings to differences among other stores, such as Kroger to Kroger Fresh Fare, where the coefficients are -0.90 and -0.70 respectively, and their confidence intervals are wider (-1.16 to -0.24 for Kroger and -1.36 to -0.44 for Kroger Fresh Fare), it shows that the variation in pricing between HEB and Central Market is relatively muted compared to Kroger and Kroger Fresh Fare, which shows a more significant pricing difference even though they are both Kroger-owned. Based on this evidence, it is fair to say that though Central Market does charges more than HEB, the magnitude of this difference is smaller when compared to the variances observed between other store brands such as Kroger and Kroger Fresh Fare. This suggests that Central Market's higher pricing is from selling different and more higher-end products rather than a shift in pricing strategy for similar products.
+
+
+### Part F.)
+
+
+
+```{r, message=FALSE, echo=FALSE}
+
+
+
+grocery <- grocery %>%
+  
+  mutate(Income10K = Income / 10000)
+
+
+incomelm <- lm(Price ~  Income10K + Product , data=grocery)
+head(get_regression_table(incomelm, conf.level = 0.95, digits=2), n = 5)
+
+
+
+head(standardize_parameters(incomelm), n = 5)
+
+
+
+```
+
+1.) 
+
+> Based on the regression model, A negative coefficient for the Income10K predictor suggests that as consumer income increases per ZIP code, there is a decrease in the price of the same product across stores on average. This means that consumers in poorer ZIP codes will have to pay more for the same good on average.
+
+
+
+2.)
+
+
+> A one-standard deviation increase in the income of a ZIP code seems to be associated with
+a -0.03 standard-deviation change in the price that consumers in that ZIP code expect to pay for
+the same product.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
